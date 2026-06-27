@@ -11,7 +11,9 @@ jobs:
     runs-on: macos-15
     steps:
       - name: Install dependencies
-        run: brew install rsync
+        run: |
+          brew trust aws/tap
+          brew install rsync
       - uses: actions/checkout@v6
         with:
           lfs: true
