@@ -1,0 +1,86 @@
+(trueflux-static) {
+  # >```
+  # >root [<matcher>] <path>
+  # >```
+  # >
+  # > - <path> is the path to use for the site root
+  # >
+  # >Prior to v2.8.0, the `<path>` argument could be confused by the parser for a matcher token if it began with `/`, so it was necessary to specify a wildcard matcher token (`*`).
+  #
+  # — [See Caddy's documentation on the `root` directive](
+  #     https://caddyserver.com/docs/caddyfile/directives/root#syntax
+  #   )
+  #
+  # Debian 13, released 09 Aug 2025 (~6 months ago), is on Caddy v2.6.2,
+  # released 13 Oct 2022 (~3.3 yrs ago, before some major world events);
+  # that's almost 3 _years_ out of sync. I knew Debian was conservative,
+  # but wow! Caddy is not an obscure package either.
+  root * /usr/share/caddy/{host}
+
+  file_server {
+    # We enforce our own idea of what should be canonical.
+    disable_canonical_uris
+  }
+
+  # The regex name isn't just a nicety; Caddy redirects to a `Location:`
+  # w/o it. Oh well, though the regex doesn't match paths w/o a trailing
+  # slash, that's the bit it captures for removal, so it fits as a name,
+  # but the named matcher itself is called `trailing_slash`, so it reads
+  # nicer to use, too. Yeah, I had to name the matcher, too, to get this
+  # to work, or it redirects to the Caddy expression literal.
+  @trailing_slash path_regexp without_trailing_slash ^(.+)/$
+
+  # I go through quite a workaround process to allow clean URLs, and
+  # disallow the dirty equivalents.
+  #
+  # There's an open issue for a proposed `hide` directive. Make sure
+  # to try it out when (or if) it's released:
+  #
+  # https://github.com/mholt/caddy/issues/370
+
+  # `route` creates order-dependence between directives
+  route {
+    # Redirect directory URLs (trailing slash) to file versions
+    #
+    # TODO: don't redirect if file request fails. This seems like it
+    # should be simple, but success of request is based on existence
+    # of file at path, not would-be response code.
+    redir @trailing_slash {re.without_trailing_slash.1} permanent
+
+    error /404 404
+
+    # If path has HTML or XML extension, respond with 404 error.
+    error /*.html 404
+    error /**/*.html 404
+    error /*.xml 404
+    error /**/*.xml 404
+    #
+    # If path is explicit index, respond with 404 error rather than body
+    # of index.html. User must access `/path` rather than `/path/index`.
+    error /index 404
+    error /**/index 404
+    #
+    # Why doesn't this work? It makes files of any extension, not merely
+    # those in the list below, respond w/ a 404 (sans styling, and other
+    # stuff, as that'd include *.css files, for example):
+    #
+    # ```
+    # error *.html 404
+    # error *.xml 404
+    # error index 404
+    # ```
+
+    try_files {path} \
+      {path}.html {path}/index.html \
+      {path}.xml {path}/index.xml \
+      {path}.txt {path}/index.txt
+  }
+
+  handle_errors {
+    file_server
+    rewrite * /{http.error.status_code}.html
+  }
+
+  # Enables automatic response compression for HTML, CSS, JS, JSON, SVG, etc.
+  encode zstd gzip
+}

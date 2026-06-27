@@ -1,0 +1,3 @@
+jokestar.store {
+	import jokestar.store
+}

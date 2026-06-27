@@ -1,0 +1,24 @@
+name: Deploy web server configuration
+
+on:
+  push:
+    branches: ['master']
+
+jobs:
+  deploy:
+    # GitHub Actions only provides Ubuntu for a Linux option, that don't
+    # package Zola.
+    runs-on: macos-15
+    steps:
+      - name: Install dependencies
+        run: brew install rsync
+      - uses: actions/checkout@v6
+        with:
+          lfs: true
+      - name: Setup credentials
+        run: |
+          printf '%s\n' "${{ secrets.TRUEFLUX_SITES_SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          printf '%s\n' "${{ secrets.TRUEFLUX_SITES_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519
+      - name: Deploy
+        run: env LC_ALL=POSIX bin/deploy

@@ -1,0 +1,36 @@
+#!/usr/bin/env sh
+
+# The webserver's not configured to respond to HTTP requests directed to
+# this domain, but the IP will resolve, so SSH/RSync will work.
+REMOTE=static.trueflux.agency
+
+if [ "$CI" = true ]; then
+  REMOTE="deploy@$REMOTE"
+fi
+
+main() {
+  rsync -rlpvz                   -og --chown :caddy --chmod=660       "$(base_dir)"/Caddyfile        "$REMOTE":/etc/caddy/Caddyfile
+  rsync -rlpvz --mkpath --delete -og --chown :caddy --chmod=D770,F660 "$(base_dir)"/snippets/common/ "$REMOTE":/etc/caddy/snippets/common
+}
+
+# Used so that `bin/deploy` can be called from any directory.
+base_dir() {
+  case "$0" in
+    # Special case to allow `%/bin/deploy` for the `*` case, rather than
+    # having to specify that matching `/` before `bin`'s optional (which
+    # isn't possible w/o non-POSIX regex or use of a temporary local var
+    # that also necessitates a non-POSIX feature, or some other annoying
+    # method).
+    bin/deploy)
+      echo "$PWD"
+      ;;
+    /*)
+      echo "${0%/bin/deploy}"
+      ;;
+    *)
+      echo "$PWD"/"${0%/bin/deploy}"
+      ;;
+  esac
+}
+
+main "$@"
