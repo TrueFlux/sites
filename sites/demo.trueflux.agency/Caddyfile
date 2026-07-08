@@ -1,0 +1,3 @@
+demo.trueflux.agency {
+	import trueflux-static
+}
