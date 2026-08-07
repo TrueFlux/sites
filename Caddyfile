@@ -1,6 +1,2 @@
 import snippets/common/trueflux-static/Caddyfile
-
-# `rsync`ed to production by each site's respective deployment, from the
-# given site's repo.
-import snippets/sites/*/Caddyfile
 import sites/*/Caddyfile
