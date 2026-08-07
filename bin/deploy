@@ -11,6 +11,8 @@ fi
 main() {
   rsync -rlpvz                   -og --chown :caddy --chmod=660       "$(base_dir)"/Caddyfile        "$REMOTE":/etc/caddy/Caddyfile
   rsync -rlpvz --mkpath --delete -og --chown :caddy --chmod=D770,F660 "$(base_dir)"/snippets/common/ "$REMOTE":/etc/caddy/snippets/common
+  rsync -rlpvz --mkpath --delete -og --chown :caddy --chmod=D770,F660 "$(base_dir)"/sites/           "$REMOTE":/etc/caddy/sites
+  ssh "$REMOTE" sudo systemctl reload caddy
 }
 
 # Used so that `bin/deploy` can be called from any directory.
