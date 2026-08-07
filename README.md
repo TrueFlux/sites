@@ -1,43 +1,37 @@
 TrueFlux Sites
 ==============
 
-This repo contains the `Caddyfile` that hosts the shared configuration for TrueFlux' static sites, along w/ the individual production `Caddyfile`s which import that shared config. On push, the configs are deployed to production, but for local use, this repo is intended to be added as a Git submodule to whatever repo contains the code for that specific static site, w/ its development `Caddyfile` importing the one in this nested repo.
+This repo contains the Caddy configuration for all TrueFlux static sites. On push to `master`, CI deploys the full configuration to production and reloads Caddy.
 
-There's a main `Caddyfile`, used in production, that imports the common snippet, then imports the production site-specific Caddyfiles which themselves use the snippet in their own site-specific snippet which they then use in a production config, then there are development `Caddyfile`s for each site in their respective repos, which also import the common snippet and the snippet for the given site from this repo, intended to be nested as a Git submodule.
-
-So, for a static site example.com, where directories are relative to the site repo and `caddy/` is this repo as a submodule:
-
-`caddy/Caddyfile` (the main production `Caddyfile` that imports the common snippet, then all the site-specific `Caddyfile`s in production that use it):
+## Structure
 
 ```
-import snippets/common/trueflux-static/Caddyfile
-import snippets/sites/*/Caddyfile
-import sites/*/Caddyfile
+Caddyfile                          # Main production Caddyfile — imports the common snippet and all site configs
+snippets/common/trueflux-static/   # Shared server config (file_server, clean URLs, error handling, compression)
+sites/<domain>/Caddyfile           # Per-site production config — imports trueflux-static
 ```
 
-`caddy/snippets/sites/example.com/Caddyfile` (the site-specific `Caddyfile` that defines the site snippet which imports the common snippet):
+## Adding a new site
+
+1. Add `sites/<domain>/Caddyfile`:
 
 ```
-(example.com) {
+example.com {
 	import trueflux-static
 }
 ```
 
-`caddy/sites/example.com/Caddyfile` (the site-specific `Caddyfile` that defines the production site config which imports the site snippet and defines any production-specific config):
+2. Push — CI will deploy the new config and reload Caddy.
 
-```
-example.com {
-	import example.com
-}
+3. On the server, ensure the web root directory is writable by the `deploy` user:
+
+```sh
+sudo chown root:caddy /usr/share/caddy
+sudo chmod 775 /usr/share/caddy
 ```
 
-`Caddyfile` (the development `Caddyfile` that 1. imports the common snippet, then the site-specific snippet, and 2. defines the development site config which imports the site snippet and defines any development-specific config):
+Subsequent deploys from the site repo will create `/usr/share/caddy/<domain>/` automatically via rsync's `--mkpath`.
 
-```
-import caddy/snippets/trueflux-static/Caddyfile
-import caddy/snippets/sites/example.com/Caddyfile
+## Local development
 
-example.localhost {
-	import example.com
-}
-```
+Each site repo includes this repo as a `caddy/` submodule, used only for the local development `Caddyfile`. See the individual site repo READMEs for setup instructions.
