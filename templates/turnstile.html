@@ -1,0 +1,15 @@
+{# Cloudflare Turnstile widget for contact forms that post to
+   https://trueflux.agency/api/contact_form — Api::ContactFormController
+   verifies the token server-side (same Turnstileable concern used by
+   trueflux.agency's own inquiry form).
+
+   One widget (one site key/secret key pair) covers every domain listed
+   in its Cloudflare Turnstile dashboard config — adding a new site here
+   means adding its domain there too, or the widget won't render for it.
+
+   Symlinked in as templates/turnstile.html by each consuming site, same
+   as bin/dev. #}
+{% macro widget() %}
+	<script src=https://challenges.cloudflare.com/turnstile/v0/api.js async defer></script>
+	<div class=cf-turnstile data-sitekey=0x4AAAAAAEHHzJZAwJS2lmW1></div>
+{% endmacro widget %}
