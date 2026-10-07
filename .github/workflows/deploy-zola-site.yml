@@ -1,0 +1,49 @@
+name: Deploy Zola site
+
+# Reusable workflow every Zola site calls from its own .github/workflows/deploy.yml:
+#
+#   jobs:
+#     deploy:
+#       uses: TrueFlux/sites/.github/workflows/deploy-zola-site.yml@master
+#       secrets:
+#         ssh_private_key: ${{ secrets.<SITE>_SSH_PRIVATE_KEY }}
+#
+# Builds the calling repo and runs its bin/deploy (symlinked to this repo's
+# bin/deploy-site, via the caddy submodule).
+
+on:
+  workflow_call:
+    secrets:
+      ssh_private_key:
+        description: Private key for the server's deploy user
+        required: true
+
+jobs:
+  deploy:
+    # GitHub Actions only provides Ubuntu for a Linux option, that don't
+    # package Zola.
+    runs-on: macos-15
+    steps:
+      - name: Install dependencies
+        run: brew install rsync
+      # Pinned rather than taken from Homebrew: Zola 0.23 moved to Tera 2,
+      # which drops the macro/import syntax the sites' templates use
+      - name: Install Zola
+        run: |
+          mkdir -p "$HOME/bin"
+          curl -sSfL https://github.com/getzola/zola/releases/download/v0.22.1/zola-v0.22.1-aarch64-apple-darwin.tar.gz | tar xz -C "$HOME/bin"
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+      - uses: actions/checkout@v6
+        with:
+          lfs: true
+          submodules: true
+      - name: Build
+        run: zola build
+      - name: Setup credentials
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.ssh_private_key }}" > ~/.ssh/id_ed25519
+          cp caddy/.github/known_hosts ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519
+      - name: Deploy
+        run: env LC_ALL=POSIX bin/deploy

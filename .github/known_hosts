@@ -1,1 +1,4 @@
-static.trueflux.agency ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKA+eyE+ef/+QwKuhsOdb86flEF3nVGI0g1fB4qmmeLp
+# Every TrueFlux static site, and this repo's own deploy, connects to the same
+# server (static.trueflux.agency), so one key covers whichever domain a site
+# deploys to. Used by bin/deploy and the shared deploy-zola-site workflow.
+* ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKA+eyE+ef/+QwKuhsOdb86flEF3nVGI0g1fB4qmmeLp

@@ -47,6 +47,28 @@ It rsyncs the built `public/` to the static server, taking the domain from
 `/usr/share/caddy/<domain>` directory it's served from, so every site needs
 its own domain. In CI (`CI=true`) it connects as the `deploy` user.
 
+CI is the reusable `.github/workflows/deploy-zola-site.yml` workflow, which
+pins the Zola version, builds the site and runs its `bin/deploy`. Each site's
+own `.github/workflows/deploy.yml` just calls it on push, passing the site's
+deploy key secret:
+
+```yaml
+name: Deploy site
+
+on:
+  push:
+    branches: ['master']
+
+jobs:
+  deploy:
+    uses: TrueFlux/sites/.github/workflows/deploy-zola-site.yml@master
+    secrets:
+      ssh_private_key: ${{ secrets.<SITE>_SSH_PRIVATE_KEY }}
+```
+
+The server's host key is in `.github/known_hosts`, under a `*` pattern since
+every site's domain points at the same server.
+
 ## Local development
 
 Each site repo includes this repo as a `caddy/` submodule, used for the local
