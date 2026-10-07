@@ -2,17 +2,18 @@
 
 set -eu
 
-# Symlinked in as bin/dev by each consuming site repo. Builds the site
-# and serves it via that site's local Caddyfile, which reads $CADDY_HOST
-# (with the same default as here, and an explicit http:// prefix on the
-# site address) to decide what to listen on. Always plain HTTP — Caddy
-# treats "localhost" as an internal trusted name and gives it automatic
-# HTTPS regardless of port, so serving this over HTTP takes an explicit
-# opt-out in the Caddyfile, not just an unqualified host:port.
+# Symlinked in as bin/dev by each consuming site repo, and run from the
+# site's root. Builds the site and serves it via this repo's Caddyfile.dev
+# (through the site's caddy submodule), which reads $CADDY_HOST (with the
+# same default as here, and an explicit http:// prefix on the site address)
+# to decide what to listen on. Always plain HTTP — Caddy treats "localhost"
+# as an internal trusted name and gives it automatic HTTPS regardless of
+# port, so serving this over HTTP takes an explicit opt-out in the
+# Caddyfile, not just an unqualified host:port.
 #
 # Pass a different host:port as the first argument if 3000 is taken.
 HOST="${1:-localhost:3000}"
 
 zola build --base-url "http://$HOST"
 echo "==> http://$HOST"
-exec env CADDY_HOST="$HOST" caddy run --watch
+exec env CADDY_HOST="$HOST" caddy run --config caddy/Caddyfile.dev --adapter caddyfile --watch

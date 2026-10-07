@@ -10,6 +10,7 @@ Caddyfile                          # Main production Caddyfile — imports the c
 snippets/common/trueflux-static/   # Shared server config (file_server, clean URLs, error handling, compression)
 sites/<domain>/Caddyfile           # Per-site production config — imports trueflux-static
 bin/dev                            # Shared local dev script — see "Local development"
+Caddyfile.dev                      # Local dev config bin/dev serves sites with
 bin/deploy-site                    # Shared site deploy script — see "Deploying a site"
 ```
 
@@ -71,17 +72,16 @@ every site's domain points at the same server.
 
 ## Local development
 
-Each site repo includes this repo as a `caddy/` submodule, used for the local
-development `Caddyfile` and for `bin/dev`, the shared dev script — symlink it
-in:
+Each site repo includes this repo as a `caddy/` submodule, used for
+`bin/dev`, the shared dev script — symlink it in:
 
 ```sh
 ln -s ../caddy/bin/dev bin/dev
 ```
 
-`bin/dev` builds the site once and runs `caddy run --watch` against
-`$CADDY_HOST`, which the site's own local `Caddyfile` should declare with the
-same generic default and an explicit `http://` prefix:
+Run from the site's root, `bin/dev` builds the site once and runs
+`caddy run --watch` with this repo's `Caddyfile.dev`, which serves `public/`
+on `$CADDY_HOST` with an explicit `http://` prefix:
 
 ```
 http://{$CADDY_HOST:localhost:3000} {
@@ -89,6 +89,8 @@ http://{$CADDY_HOST:localhost:3000} {
 	root public
 }
 ```
+
+Sites don't need a `Caddyfile` of their own.
 
 The `http://` prefix matters — Caddy treats `localhost` as an internal
 trusted name and gives it automatic HTTPS regardless of port, so without it

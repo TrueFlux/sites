@@ -1,0 +1,7 @@
+import snippets/common/trueflux-static/Caddyfile
+
+http://{$CADDY_HOST:localhost:3000} {
+	import trueflux-static
+
+	root public
+}
