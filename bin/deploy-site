@@ -1,0 +1,27 @@
+#!/usr/bin/env sh
+
+# Deploys a Zola site's built `public/` to the static server.
+#
+# Symlinked in as bin/deploy by each consuming site, same as bin/dev. The
+# domain comes from base_url in the site's zola.toml, and is both the SSH
+# host and the directory under /usr/share/caddy the site is served from.
+
+set -eu
+
+# Run from the site's root, wherever bin/deploy is called from.
+cd "$(dirname "$0")/.."
+
+DOMAIN=$(sed -n 's|^base_url *= *"https\{0,1\}://\([^/"]*\)/\{0,1\}"|\1|p' zola.toml)
+
+if [ -z "$DOMAIN" ]; then
+  echo "bin/deploy: couldn't read base_url from zola.toml" >&2
+  exit 1
+fi
+
+REMOTE=$DOMAIN
+
+if [ "${CI:-}" = true ]; then
+  REMOTE="deploy@$REMOTE"
+fi
+
+rsync -rlpvz --mkpath --delete -og --chown :caddy --chmod=D770,F660 public/* "$REMOTE":/usr/share/caddy/"$DOMAIN"

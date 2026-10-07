@@ -10,6 +10,7 @@ Caddyfile                          # Main production Caddyfile — imports the c
 snippets/common/trueflux-static/   # Shared server config (file_server, clean URLs, error handling, compression)
 sites/<domain>/Caddyfile           # Per-site production config — imports trueflux-static
 bin/dev                            # Shared local dev script — see "Local development"
+bin/deploy-site                    # Shared site deploy script — see "Deploying a site"
 ```
 
 ## Adding a new site
@@ -32,6 +33,19 @@ sudo chmod 775 /usr/share/caddy
 ```
 
 Subsequent deploys from the site repo will create `/usr/share/caddy/<domain>/` automatically via rsync's `--mkpath`.
+
+## Deploying a site
+
+Each site symlinks in `bin/deploy-site` as its own `bin/deploy`:
+
+```sh
+ln -s ../caddy/bin/deploy-site bin/deploy
+```
+
+It rsyncs the built `public/` to the static server, taking the domain from
+`base_url` in the site's `zola.toml` — that's both the SSH host and the
+`/usr/share/caddy/<domain>` directory it's served from, so every site needs
+its own domain. In CI (`CI=true`) it connects as the `deploy` user.
 
 ## Local development
 
